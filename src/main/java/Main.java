@@ -28,13 +28,12 @@ public class Main {
 
             String request = handleRequestInput(clientSocket.getInputStream());
             String target = getRequestTarget(request);
-            System.out.println(target);
             String message = switch (target) {
                 case "" -> buildOutputMessage(ResponseStatus.OK);
                 default -> buildOutputMessage(ResponseStatus.NOT_FOUND);
             };
 
-            outMessage.println(message);
+            outMessage.println(message.concat("\r\n").concat("\r\n"));
             System.out.println("accepted new connection");
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
