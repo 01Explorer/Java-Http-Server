@@ -83,7 +83,11 @@ public class Main {
 
     private static String getRequestTarget(String request) {
         request = request.replaceAll("\r\n", "");
-        return request.split(" ")[1].split("/")[1];
+        String target = request.split(" ")[1].replaceFirst("/", "");
+        if (target.contains("/")) {
+            return request.split(" ")[1].split("/")[1];
+        }
+        return target;
     }
 
     private static String handleRequestInput(InputStream inputStream) throws IOException {
