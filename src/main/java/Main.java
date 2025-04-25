@@ -78,7 +78,7 @@ public class Main {
         String headersAsString = headers.entrySet().stream().map(entry -> {
             return entry.getKey() + ": " + entry.getValue().toString();
         }).collect(Collectors.joining("\r\n"));
-        return statusLine.concat("\r\n").concat(headersAsString).concat("\r\n").concat(body);
+        return statusLine.concat("\r\n").concat(headersAsString).concat("\r\n\r\n").concat(body);
     }
 
     private static String getRequestTarget(String request) {
