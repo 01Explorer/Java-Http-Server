@@ -1,5 +1,6 @@
 import enums.ContentType;
 import enums.ResponseStatus;
+import models.Request;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,7 +9,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,29 +31,28 @@ public class Main {
             Socket clientSocket = serverSocket.accept(); // Wait for connection from client
             PrintWriter outMessage = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            String request = handleRequestInput(clientSocket.getInputStream());
-            String target = getRequestTarget(request);
+            Request request = handleRequestInput(clientSocket.getInputStream());
+            String target = getRequestTarget(request.getRequestLine());
             String message = switch (target) {
-                case "", "echo" -> buildStatusLine(ResponseStatus.OK);
+                case "", "echo", "user-agent" -> buildStatusLine(ResponseStatus.OK);
                 default -> buildStatusLine(ResponseStatus.NOT_FOUND);
             };
 
             String echo = "";
             if (target.equals("echo")) {
-                echo = getEcho(request);
+                echo = getEcho(request.getRequestLine());
+            }
+            if (target.equals("user-agent")) {
+                echo = request.getHeaders().get("User-Agent");
             }
 
 
             Map<String, Object> headers = switch (target) {
-                case "echo" -> buildHeader(echo);
+                case "echo", "user-agent" -> buildHeader(echo);
                 default -> new HashMap<>();
             };
 
             outMessage.println(buildResponse(message, headers, echo));
-            clientSocket.close();
-            serverSocket.close();
-            outMessage.close();
-            System.out.println("accepted new connection");
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
@@ -90,8 +92,25 @@ public class Main {
         return target;
     }
 
-    private static String handleRequestInput(InputStream inputStream) throws IOException {
+    private static Request handleRequestInput(InputStream inputStream) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        return reader.readLine();
+        String inputLine;
+        Request.Builder builder = new Request.Builder();
+        List<String> headers = new ArrayList<>();
+        while (reader.ready()) {
+            inputLine = reader.readLine();
+           if(inputLine.contains(": ")){
+               headers.add(inputLine);
+               continue;
+           }
+           if (inputLine.contains("HTTP")){
+               builder.setRequestLine(inputLine);
+               continue;
+           }
+
+           builder.setRequestBody(inputLine);
+        }
+        builder.setHeaders(String.join("\r\n", headers));
+        return builder.build();
     }
 }
