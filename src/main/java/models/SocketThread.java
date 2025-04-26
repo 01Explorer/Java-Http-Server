@@ -62,6 +62,7 @@ public class SocketThread extends Thread {
 
             if (target.equals("files") && message.contains("404")) {
                 headers = new HashMap<>();
+                echo = "";
             }
 
             outMessage.println(buildResponse(message, headers, echo));
