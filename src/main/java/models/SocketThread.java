@@ -5,6 +5,8 @@ import enums.ResponseStatus;
 import utils.Utils;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class SocketThread extends Thread {
@@ -31,23 +34,35 @@ public class SocketThread extends Thread {
             Request request = handleRequestInput(clientSocket.getInputStream());
             String target = getRequestTarget(request.getRequestLine());
             String message = switch (target) {
-                case "", "echo", "user-agent" -> buildStatusLine(ResponseStatus.OK);
+                case "", "echo", "user-agent", "files" -> buildStatusLine(ResponseStatus.OK);
                 default -> buildStatusLine(ResponseStatus.NOT_FOUND);
             };
 
             String echo = "";
-            if (target.equals("echo")) {
+            if (target.equals("echo") || target.equals("files")) {
                 echo = getEcho(request.getRequestLine());
             }
             if (target.equals("user-agent")) {
                 echo = request.getHeaders().get("User-Agent");
             }
+            if (target.equals("files")) {
+                try {
+                    echo = handleFilesRequest(echo);
+                } catch (FileNotFoundException e) {
+                    message = buildStatusLine(ResponseStatus.NOT_FOUND);
+                }
+            }
 
 
             Map<String, Object> headers = switch (target) {
                 case "echo", "user-agent" -> buildHeader(echo);
+                case "files" -> buildFilesHeader(echo);
                 default -> new HashMap<>();
             };
+
+            if (target.equals("files") && message.contains("404")) {
+                headers = new HashMap<>();
+            }
 
             outMessage.println(buildResponse(message, headers, echo));
             outMessage.close();
@@ -56,6 +71,24 @@ public class SocketThread extends Thread {
             e.printStackTrace();
             return;
         }
+    }
+
+    private String handleFilesRequest(String echo) throws FileNotFoundException {
+        File file = new File("/tmp/".concat(echo));
+        Scanner scanner = new Scanner(file);
+        StringBuilder content = new StringBuilder();
+        while (scanner.hasNextLine()) {
+            content.append(scanner.nextLine());
+        }
+        scanner.close();
+        return content.toString();
+    }
+
+    private Map<String, Object> buildFilesHeader(String content) {
+        Map<String, Object> headers = new HashMap<>();
+        headers.put(ContentType.KEY, ContentType.OCTET_STREAM);
+        headers.put("Content-Length", content.length());
+        return headers;
     }
 
     private String getEcho(String request) {
@@ -76,7 +109,7 @@ public class SocketThread extends Thread {
         return httpVersion + " " + responseStatus.code + " " + responseStatus.message;
     }
 
-    private String buildResponse(String statusLine, Map<String, Object> headers, String body){
+    private String buildResponse(String statusLine, Map<String, Object> headers, String body) {
         String headersAsString = headers.entrySet().stream().map(entry -> {
             return entry.getKey() + ": " + entry.getValue().toString();
         }).collect(Collectors.joining(Utils.CRLF));
@@ -100,11 +133,11 @@ public class SocketThread extends Thread {
         List<String> headers = new ArrayList<>();
         while (reader.ready()) {
             inputLine = reader.readLine();
-            if(inputLine.contains(": ")){
+            if (inputLine.contains(": ")) {
                 headers.add(inputLine);
                 continue;
             }
-            if (inputLine.contains("HTTP")){
+            if (inputLine.contains("HTTP")) {
                 builder.setRequestLine(inputLine);
                 continue;
             }
