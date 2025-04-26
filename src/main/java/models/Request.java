@@ -5,6 +5,7 @@ import utils.Utils;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class Request {
     private final String requestLine;
@@ -18,6 +19,7 @@ public class Request {
     }
 
     private Map<String, String> processStringHeaders(String headersString) {
+        if (Objects.isNull(headersString) || headersString.isEmpty()) return new HashMap<>();
         Map<String, String> headers = new HashMap<>();
         Arrays.stream(headersString.split(Utils.CRLF)).forEach(s -> {
             String[] keyValuePair = s.trim().split(": ");
