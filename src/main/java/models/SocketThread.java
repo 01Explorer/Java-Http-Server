@@ -75,7 +75,8 @@ public class SocketThread extends Thread {
     }
 
     private String handleFilesRequest(String echo) throws FileNotFoundException {
-        File file = new File("./".concat(echo));
+        File file = new File(echo);
+        System.out.println(file.getAbsolutePath());
         Scanner scanner = new Scanner(file);
         StringBuilder content = new StringBuilder();
         while (scanner.hasNextLine()) {
