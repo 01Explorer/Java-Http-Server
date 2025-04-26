@@ -87,7 +87,7 @@ public class SocketThread extends Thread {
 
     private Map<String, Object> buildFilesHeader(String content) {
         Map<String, Object> headers = new HashMap<>();
-        headers.put(ContentType.KEY, ContentType.OCTET_STREAM);
+        headers.put(ContentType.KEY, ContentType.OCTET_STREAM.getName());
         headers.put("Content-Length", content.length());
         return headers;
     }
