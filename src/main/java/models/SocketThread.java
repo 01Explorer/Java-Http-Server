@@ -2,6 +2,7 @@ package models;
 
 import enums.ContentType;
 import enums.ResponseStatus;
+import utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class SocketThread extends Thread {
@@ -57,7 +59,7 @@ public class SocketThread extends Thread {
     }
 
     private String getEcho(String request) {
-        request = request.replaceAll("\r\n", "");
+        request = request.replaceAll(Utils.CRLF, "");
         return request.split(" ")[1].split("/")[2];
     }
 
@@ -77,12 +79,13 @@ public class SocketThread extends Thread {
     private String buildResponse(String statusLine, Map<String, Object> headers, String body){
         String headersAsString = headers.entrySet().stream().map(entry -> {
             return entry.getKey() + ": " + entry.getValue().toString();
-        }).collect(Collectors.joining("\r\n"));
-        return statusLine.concat("\r\n").concat(headersAsString).concat("\r\n\r\n").concat(body);
+        }).collect(Collectors.joining(Utils.CRLF));
+        return statusLine.concat(Utils.CRLF).concat(headersAsString).concat("\r\n\r\n").concat(body);
     }
 
     private String getRequestTarget(String request) {
-        request = request.replaceAll("\r\n", "");
+        if (Objects.isNull(request) || request.isEmpty()) return "";
+        request = request.replaceAll(Utils.CRLF, "");
         String target = request.split(" ")[1].replaceFirst("/", "");
         if (target.contains("/")) {
             return request.split(" ")[1].split("/")[1];
@@ -108,7 +111,7 @@ public class SocketThread extends Thread {
 
             builder.setRequestBody(inputLine);
         }
-        builder.setHeaders(String.join("\r\n", headers));
+        builder.setHeaders(String.join(Utils.CRLF, headers));
         return builder.build();
     }
 }
