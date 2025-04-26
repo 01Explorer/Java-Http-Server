@@ -1,7 +1,8 @@
 package enums;
 
 public enum ContentType {
-    TEXT("text/plain");
+    TEXT("text/plain"),
+    OCTET_STREAM("application/octet-stream");
 
 
     public static String KEY = "Content-Type";
