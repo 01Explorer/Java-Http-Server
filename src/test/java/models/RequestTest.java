@@ -1,5 +1,6 @@
 package models;
 
+import enums.RequestType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,6 +21,7 @@ public class RequestTest {
         request = builder.build();
         assertEquals(requestLine, request.getRequestLine());
         assertEquals(requestBody, request.getRequestBody());
+        assertEquals(RequestType.GET, request.getRequestType());
         assertTrue(request.getHeaders().containsKey("Host"));
         assertTrue(request.getHeaders().containsKey("User-Agent"));
         assertTrue(request.getHeaders().containsKey("Accept"));
