@@ -19,7 +19,7 @@ public class Main {
 
             while (true) {
                Socket socket = serverSocket.accept();
-               new SocketThread(socket).start();
+               new SocketThread(socket, args).start();
             }
 
         } catch (IOException e) {
