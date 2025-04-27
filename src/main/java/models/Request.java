@@ -1,5 +1,6 @@
 package models;
 
+import enums.RequestType;
 import utils.Utils;
 
 import java.util.Arrays;
@@ -11,11 +12,18 @@ public class Request {
     private final String requestLine;
     private final Map<String, String> headers;
     private final String requestBody;
+    private final RequestType requestType;
 
     private Request(Builder builder) {
         this.requestLine = builder.requestLine;
+        this.requestType = getRequestTypeFromRequestLine(builder.requestLine);
         this.headers = processStringHeaders(builder.headers);
         this.requestBody = builder.requestBody;
+    }
+
+    private RequestType getRequestTypeFromRequestLine(String requestLine) {
+        String objectOfInterest = requestLine.split(" ")[0];
+        return RequestType.fromString(objectOfInterest);
     }
 
     private Map<String, String> processStringHeaders(String headersString) {
@@ -43,6 +51,10 @@ public class Request {
 
     public static Builder getBuilder(){
         return new Builder();
+    }
+
+    public RequestType getRequestType() {
+        return requestType;
     }
 
     public static class Builder {
