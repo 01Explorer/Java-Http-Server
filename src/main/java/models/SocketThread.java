@@ -1,12 +1,14 @@
 package models;
 
 import enums.ContentType;
+import enums.RequestType;
 import enums.ResponseStatus;
 import utils.Utils;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,9 +24,11 @@ import java.util.stream.Collectors;
 
 public class SocketThread extends Thread {
     protected Socket clientSocket;
+    private String[] args;
 
-    public SocketThread(Socket socket) {
+    public SocketThread(Socket socket, String[] args) {
         this.clientSocket = socket;
+        this.args = args;
     }
 
     public void run() {
@@ -47,7 +51,14 @@ public class SocketThread extends Thread {
             }
             if (target.equals("files")) {
                 try {
-                    echo = handleFilesRequest(echo);
+                    if (request.getRequestType().equals(RequestType.GET)) {
+                        echo = handleGetFilesRequest(echo);
+                    }
+                    if (request.getRequestType().equals(RequestType.POST)) {
+                        handlePostFilesRequest(request, echo);
+                        echo = "";
+                        message = buildStatusLine(ResponseStatus.CREATED);
+                    }
                 } catch (FileNotFoundException e) {
                     message = buildStatusLine(ResponseStatus.NOT_FOUND);
                 }
@@ -60,7 +71,7 @@ public class SocketThread extends Thread {
                 default -> new HashMap<>();
             };
 
-            if (target.equals("files") && message.contains("404")) {
+            if (target.equals("files") && (message.contains("404") || request.getRequestType().equals(RequestType.POST))) {
                 headers = new HashMap<>();
                 echo = "";
             }
@@ -74,8 +85,14 @@ public class SocketThread extends Thread {
         }
     }
 
-    private String handleFilesRequest(String echo) throws FileNotFoundException {
-        File file = new File("/tmp/data/codecrafters.io/http-server-tester/".concat(echo));
+    private void handlePostFilesRequest(Request request, String fileName) throws IOException {
+        File file = new File(args[1], fileName);
+        FileWriter writer = new FileWriter(file);
+        writer.write(request.getRequestBody());
+    }
+
+    private String handleGetFilesRequest(String echo) throws FileNotFoundException {
+        File file = new File(args[1], echo);
         Scanner scanner = new Scanner(file);
         StringBuilder content = new StringBuilder();
         while (scanner.hasNextLine()) {
@@ -144,6 +161,7 @@ public class SocketThread extends Thread {
             }
 
             builder.setRequestBody(inputLine);
+            break;
         }
         builder.setHeaders(String.join(Utils.CRLF, headers));
         return builder.build();
