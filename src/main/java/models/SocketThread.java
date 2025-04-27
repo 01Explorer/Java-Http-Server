@@ -149,21 +149,27 @@ public class SocketThread extends Thread {
         String inputLine;
         Request.Builder builder = new Request.Builder();
         List<String> headers = new ArrayList<>();
-        while (reader.ready()) {
-            inputLine = reader.readLine();
+        int contentLength = 0;
+
+        while (!(inputLine = reader.readLine()).isEmpty()) {
             if (inputLine.contains(": ")) {
                 headers.add(inputLine);
-                continue;
             }
             if (inputLine.contains("HTTP")) {
                 builder.setRequestLine(inputLine);
-                continue;
             }
-
-            builder.setRequestBody(inputLine);
-            break;
+            if (inputLine.contains("Content-Length")) {
+                contentLength = Integer.parseInt(inputLine.substring(inputLine.indexOf(':') + 1).trim());
+            }
         }
         builder.setHeaders(String.join(Utils.CRLF, headers));
+
+        if (contentLength > 0) {
+            char[] buffer = new char[contentLength];
+            reader.read(buffer, 0, contentLength);
+            String body = new String(buffer);
+            builder.setRequestBody(body);
+        }
         return builder.build();
     }
 }
