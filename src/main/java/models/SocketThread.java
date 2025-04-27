@@ -86,9 +86,11 @@ public class SocketThread extends Thread {
     }
 
     private void handlePostFilesRequest(Request request, String fileName) throws IOException {
-        File file = new File(args[1], fileName);
+        File file = new File("/tmp/", fileName);
         FileWriter writer = new FileWriter(file);
         writer.write(request.getRequestBody());
+        writer.flush();
+        writer.close();
     }
 
     private String handleGetFilesRequest(String echo) throws FileNotFoundException {
