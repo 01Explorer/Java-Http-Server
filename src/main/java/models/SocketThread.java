@@ -71,6 +71,10 @@ public class SocketThread extends Thread {
                 default -> new HashMap<>();
             };
 
+            if(verifyCanEncode(headers, request)){
+                headers.put("Content-Encoding", "gzip");
+            }
+
             if (target.equals("files") && (message.contains("404") || request.getRequestType().equals(RequestType.POST))) {
                 headers = new HashMap<>();
                 echo = "";
@@ -83,6 +87,12 @@ public class SocketThread extends Thread {
             e.printStackTrace();
             return;
         }
+    }
+
+    private boolean verifyCanEncode(Map<String, Object> headers, Request request) {
+        if (!request.getHeaders().containsKey("Accept-Encoding")) return false;
+
+        return request.getHeaders().get("Accept-Encoding").equals("gzip");
     }
 
     private void handlePostFilesRequest(Request request, String fileName) throws IOException {
