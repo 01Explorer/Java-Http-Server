@@ -92,7 +92,7 @@ public class SocketThread extends Thread {
     private boolean verifyCanEncode(Map<String, Object> headers, Request request) {
         if (!request.getHeaders().containsKey("Accept-Encoding")) return false;
 
-        return request.getHeaders().get("Accept-Encoding").equals("gzip");
+        return request.getHeaders().get("Accept-Encoding").contains("gzip");
     }
 
     private void handlePostFilesRequest(Request request, String fileName) throws IOException {
