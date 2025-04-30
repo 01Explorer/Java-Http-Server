@@ -78,7 +78,7 @@ public class SocketThread extends Thread {
                 headers.put("Content-Encoding", "gzip");
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 GZIPOutputStream gzip = new GZIPOutputStream(byteArrayOutputStream);
-                gzip.write("abc".getBytes());
+                gzip.write(echo.getBytes());
                 gzip.close();
                 encoded = byteArrayOutputStream.toByteArray();
                 byteArrayOutputStream.close();
