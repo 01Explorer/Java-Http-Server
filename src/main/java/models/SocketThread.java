@@ -6,6 +6,7 @@ import enums.ResponseStatus;
 import utils.Utils;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPOutputStream;
 
 public class SocketThread extends Thread {
     protected Socket clientSocket;
@@ -71,8 +73,20 @@ public class SocketThread extends Thread {
                 default -> new HashMap<>();
             };
 
+            byte[] encoded = new byte[]{};
             if(verifyCanEncode(headers, request)){
                 headers.put("Content-Encoding", "gzip");
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                GZIPOutputStream gzip = new GZIPOutputStream(byteArrayOutputStream);
+                gzip.write(echo.getBytes("UTF-8"));
+                encoded = byteArrayOutputStream.toByteArray();
+                headers.put("Content-Length", encoded.length);
+                echo = "";
+                clientSocket.getOutputStream().write(buildResponse(message, headers, "").getBytes("UTF-8"));
+                clientSocket.getOutputStream().write(encoded);
+                clientSocket.getOutputStream().flush();
+                clientSocket.close();
+                outMessage.close();
             }
 
             if (target.equals("files") && (message.contains("404") || request.getRequestType().equals(RequestType.POST))) {
