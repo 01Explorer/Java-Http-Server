@@ -78,15 +78,17 @@ public class SocketThread extends Thread {
                 headers.put("Content-Encoding", "gzip");
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 GZIPOutputStream gzip = new GZIPOutputStream(byteArrayOutputStream);
-                gzip.write(echo.getBytes("UTF-8"));
+                gzip.write("abc".getBytes());
+                gzip.close();
                 encoded = byteArrayOutputStream.toByteArray();
+                byteArrayOutputStream.close();
                 headers.put("Content-Length", encoded.length);
-                echo = "";
-                clientSocket.getOutputStream().write(buildResponse(message, headers, "").getBytes("UTF-8"));
+                clientSocket.getOutputStream().write(buildResponse(message, headers, "").getBytes());
                 clientSocket.getOutputStream().write(encoded);
                 clientSocket.getOutputStream().flush();
                 clientSocket.close();
                 outMessage.close();
+                return;
             }
 
             if (target.equals("files") && (message.contains("404") || request.getRequestType().equals(RequestType.POST))) {
