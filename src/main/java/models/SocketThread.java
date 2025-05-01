@@ -97,8 +97,10 @@ public class SocketThread extends Thread {
             }
 
             outMessage.println(buildResponse(message, headers, echo));
-            outMessage.close();
-            clientSocket.close();
+            if (request.getHeaders().getOrDefault("Connection", "open").equals("close")) {
+                clientSocket.close();
+                outMessage.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
             return;
